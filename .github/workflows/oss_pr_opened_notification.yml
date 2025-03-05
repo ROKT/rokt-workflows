@@ -6,7 +6,7 @@ on:
       gchat_webhook:
         required: true
   pull_request:
-    types: [opened]
+    types: [opened, reopened]
 
 jobs:
   notify-gchat:
