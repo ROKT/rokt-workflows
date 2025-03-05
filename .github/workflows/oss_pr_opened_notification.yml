@@ -17,8 +17,8 @@ jobs:
     steps:
       - name: Send Google Chat Notification for PR
         if: github.event_name == 'pull_request'
-        uses: google-github-actions/send-google-chat-webhook@v0.0.4
+        uses: SimonScholz/google-chat-action@v1.1.0
         with:
-          webhook_url: ${{ secrets.gchat_webhook }}
+          webhookUrl: ${{ secrets.gchat_webhook }}
           title: PR Created - ${{ github.event.pull_request.title }}
           imageUrl: ${{ github.event.pull_request.user.avatar_url }}
