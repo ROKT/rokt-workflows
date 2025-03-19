@@ -18,6 +18,6 @@ lint:
         - pyyaml@6.0.2
       commands:
         - name: validate-actions-versions
-          run: python3 ${plugin}/rokt-trunk-plugin/linters/validate-actions-versions/validate-action-versions.py ${target}
+          run: python3 ${plugin}/rokt-trunk-plugin/linters/validate-actions-versions/validate-actions-versions.py ${target}
           output: pass_fail
           success_codes: [0, 1]
