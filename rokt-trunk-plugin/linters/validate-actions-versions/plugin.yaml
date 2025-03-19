@@ -1,0 +1,23 @@
+version: 0.1
+lint:
+  files:
+    - name: github-actions
+      regexes:
+        - .github/workflows/.+\.yaml
+        - .github/workflows/.+\.yml
+        - .github/actions/.+\.yaml
+        - .github/actions/.+\.yml
+      comments:
+        - hash
+
+  definitions:
+    - name: validate-actions-versions
+      files: [github-actions]
+      runtime: python
+      extra_packages:
+        - pyyaml@6.0.2
+      commands:
+        - name: validate-actions-versions
+          run: python3 ${plugin}/rokt-trunk-plugin/linters/validate-actions-versions/validate-actions-versions.py ${target}
+          output: pass_fail
+          success_codes: [0, 1]
