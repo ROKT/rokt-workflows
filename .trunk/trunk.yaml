@@ -15,6 +15,7 @@ plugins:
 # Many linters and tools depend on runtimes - configure them here. (https://docs.trunk.io/runtimes)
 runtimes:
   enabled:
+    - go@1.21.0
     - node@18.20.5
     - python@3.10.8
 
@@ -41,6 +42,8 @@ lint:
         - name: PYTHONPATH
           value: ${workspace}/.venv/lib/python3.10/site-packages
   enabled:
+    - osv-scanner@2.0.0
+    - taplo@0.9.3
     - validate-actions-versions
     - codespell@2.4.1
     - flake8@7.1.2
@@ -48,20 +51,20 @@ lint:
     - kube-linter@0.6.4
     - mypy@1.15.0
     - pylint@3.3.5
-    - pyright@1.1.396
+    - pyright@1.1.397
     - semgrep@1.113.0
     - sourcery@1.35.0
     - trivy@0.60.0
     - actionlint@1.7.7
     - bandit@1.8.3
     - black@25.1.0
-    - checkov@3.2.386
+    - checkov@3.2.388
     - git-diff-check
     - isort@6.0.1
     - markdownlint@0.44.0
     - prettier@3.5.3
     - ruff@0.11.0
-    - trufflehog@3.88.17
+    - trufflehog@3.88.18
     - yamllint@1.36.2
 actions:
   enabled:
