@@ -1,0 +1,52 @@
+name: Run trunk upgrade
+
+on:
+  workflow_call:
+  schedule:
+    - cron: 0 0 1 * *
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-files:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
+
+      - name: Trunk Upgrade
+        uses: trunk-io/trunk-action/upgrade@4d5ecc89b2691705fd08c747c78652d2fc806a94 # v1.1.19
+
+      - name: Check if VERSION file changed
+        id: version-changed
+        uses: tj-actions/changed-files@2f7c5bfce28377bc069a65ba478de0a74aa0ca32 # v46.0.1
+        with:
+          files: .trunk/trunk.yaml
+
+      - name: Create Pull Request
+        if: steps.version-changed.outputs.any_changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore: update trunk configuration"
+          title: "chore: update trunk configuration"
+          body: |
+            This PR updates the trunk configuration based on the monthly trunk upgrade.
+
+            Changes were detected in `.trunk/trunk.yaml`. Please review the changes and merge if appropriate.
+          branch: update-trunk-config
+          delete-branch: true
+
+      - name: Output Summary
+        run: |
+          if [ "${{ steps.version-changed.outputs.any_changed }}" = "true" ]; then
+            echo "## 🎉 Trunk Upgrade Summary" >> $GITHUB_STEP_SUMMARY
+            echo "A trunk upgrade was performed and changes were detected in `.trunk/trunk.yaml`." >> $GITHUB_STEP_SUMMARY
+            echo "A pull request has been created to review these changes." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ℹ️ Trunk Upgrade Summary" >> $GITHUB_STEP_SUMMARY
+            echo "No changes were detected in `.trunk/trunk.yaml` during the upgrade process." >> $GITHUB_STEP_SUMMARY
+            echo "Your trunk configuration is up to date!" >> $GITHUB_STEP_SUMMARY
+          fi
