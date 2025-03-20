@@ -29,17 +29,17 @@ lint:
       runtime: python
       environment:
         - name: PYTHONPATH
-          value: ${workspace}/.venv/lib/python3.13/site-packages
+          value: ${workspace}/.venv/lib/python3.10/site-packages
     - name: pylint
       runtime: python
       environment:
         - name: PYTHONPATH
-          value: ${workspace}/.venv/lib/python3.13/site-packages
+          value: ${workspace}/.venv/lib/python3.10/site-packages
     - name: pyright
       runtime: python
       environment:
         - name: PYTHONPATH
-          value: ${workspace}/.venv/lib/python3.13/site-packages
+          value: ${workspace}/.venv/lib/python3.10/site-packages
   enabled:
     - validate-actions-versions
     - codespell@2.4.1
