@@ -3,6 +3,9 @@ name: Trunk Lint
 on:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   lint:
     name: Run Trunk Lint

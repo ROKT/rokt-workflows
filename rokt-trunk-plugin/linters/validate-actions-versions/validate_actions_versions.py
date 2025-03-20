@@ -78,7 +78,7 @@ def validate_workflow(workflow: Dict[str, Any]) -> bool:
 def main() -> None:
     """Main entry point for the script."""
     if len(sys.argv) != 2:
-        print("Usage: validate-action-versions.py <workflow-file-path>")
+        print("Usage: validate_action_versions.py <workflow-file-path>")
         sys.exit(1)
 
     workflow_path = sys.argv[1]
