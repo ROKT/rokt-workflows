@@ -20,6 +20,10 @@ runtimes:
 
 # This is the section where you manage your linters. (https://docs.trunk.io/check/configuration)
 lint:
+  ignore:
+    - linters: [ALL]
+      paths:
+        - .venv/**
   definitions:
     - name: mypy
       runtime: python
