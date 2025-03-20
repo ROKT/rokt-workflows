@@ -28,7 +28,7 @@ jobs:
 
       - name: Create Pull Request
         if: steps.version-changed.outputs.any_changed == 'true'
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
           commit-message: "chore: update trunk configuration"
           title: "chore: update trunk configuration"
@@ -40,13 +40,15 @@ jobs:
           delete-branch: true
 
       - name: Output Summary
+        env:
+          CHANGES_DETECTED: ${{ steps.version-changed.outputs.any_changed }}
         run: |
-          if [ "${{ steps.version-changed.outputs.any_changed }}" = "true" ]; then
+          if [ "$CHANGES_DETECTED" = "true" ]; then
             echo "## 🎉 Trunk Upgrade Summary" >> $GITHUB_STEP_SUMMARY
-            echo "A trunk upgrade was performed and changes were detected in `.trunk/trunk.yaml`." >> $GITHUB_STEP_SUMMARY
+            echo "A trunk upgrade was performed and changes were detected in \`.trunk/trunk.yaml\`." >> $GITHUB_STEP_SUMMARY
             echo "A pull request has been created to review these changes." >> $GITHUB_STEP_SUMMARY
           else
             echo "## ℹ️ Trunk Upgrade Summary" >> $GITHUB_STEP_SUMMARY
-            echo "No changes were detected in `.trunk/trunk.yaml` during the upgrade process." >> $GITHUB_STEP_SUMMARY
+            echo "No changes were detected in \`.trunk/trunk.yaml\` during the upgrade process." >> $GITHUB_STEP_SUMMARY
             echo "Your trunk configuration is up to date!" >> $GITHUB_STEP_SUMMARY
           fi
