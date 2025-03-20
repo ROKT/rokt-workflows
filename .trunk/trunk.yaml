@@ -17,8 +17,25 @@ runtimes:
   enabled:
     - node@18.20.5
     - python@3.10.8
+
 # This is the section where you manage your linters. (https://docs.trunk.io/check/configuration)
 lint:
+  definitions:
+    - name: mypy
+      runtime: python
+      environment:
+        - name: PYTHONPATH
+          value: ${workspace}/.venv/lib/python3.13/site-packages
+    - name: pylint
+      runtime: python
+      environment:
+        - name: PYTHONPATH
+          value: ${workspace}/.venv/lib/python3.13/site-packages
+    - name: pyright
+      runtime: python
+      environment:
+        - name: PYTHONPATH
+          value: ${workspace}/.venv/lib/python3.13/site-packages
   enabled:
     - validate-actions-versions
     - codespell@2.4.1
