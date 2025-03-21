@@ -8,16 +8,17 @@ on:
   pull_request:
     types: [opened, reopened]
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   notify-gchat:
     runs-on: ubuntu-latest
-    permissions:
-      contents: 'read'
-      id-token: 'write'
     steps:
       - name: Send Google Chat Notification for PR
         if: github.event_name == 'pull_request'
-        uses: SimonScholz/google-chat-action@v1.1.0
+        uses: SimonScholz/google-chat-action@3b3519e5102dba8aa5046fd711c4b553586409bb #v1.1.0
         with:
           webhookUrl: ${{ secrets.gchat_webhook }}
           title: PR Created - ${{ github.event.pull_request.title }}
