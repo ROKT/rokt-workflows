@@ -23,3 +23,4 @@ jobs:
           webhookUrl: ${{ secrets.gchat_webhook }}
           title: PR Created - ${{ github.event.pull_request.title }}
           imageUrl: ${{ github.event.pull_request.user.avatar_url }}
+          threadKey: ${{ github.repository }}-${{ github.event.pull_request.number }}
