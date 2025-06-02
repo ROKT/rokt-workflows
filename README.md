@@ -17,7 +17,7 @@ job-name:
     gchat_webhook: ${{ secrets.YOUR_SECRET }}
 ```
 
-Full Github documentation can be found [here](https://docs.github.com/en/actions/sharing-automations/reusing-workflows).
+[Full Github documentation](https://docs.github.com/en/actions/sharing-automations/reusing-workflows).
 
 ### Trunk Plugin
 
