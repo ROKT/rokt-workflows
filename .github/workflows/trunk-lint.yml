@@ -1,6 +1,7 @@
 name: Trunk Lint
 
 on:
+  workflow_dispatch:
   pull_request:
 
 permissions:
