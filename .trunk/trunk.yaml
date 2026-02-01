@@ -10,7 +10,7 @@ plugins:
       ref: main
       uri: https://github.com/ROKT/rokt-workflows
     - id: trunk
-      ref: v1.7.3
+      ref: v1.7.4
       uri: https://github.com/trunk-io/plugins
 # Many linters and tools depend on runtimes - configure them here. (https://docs.trunk.io/runtimes)
 runtimes:
@@ -42,30 +42,30 @@ lint:
         - name: PYTHONPATH
           value: ${workspace}/.venv/lib/python3.10/site-packages
   enabled:
-    - osv-scanner@2.2.4
+    - osv-scanner@2.3.2
     - taplo@0.10.0
     - validate-actions-versions
     - codespell@2.4.1
     - flake8@7.3.0
-    - gitleaks@8.28.0
+    - gitleaks@8.30.0
     - kube-linter@0.7.2
-    - mypy@1.18.2
-    - pylint@4.0.2
-    - pyright@1.1.407
-    - semgrep@1.142.0
-    - sourcery@1.40.0
-    - trivy@0.67.2
-    - actionlint@1.7.8
-    - bandit@1.8.6
-    - black@25.9.0
-    - checkov@3.2.489
+    - mypy@1.19.1
+    - pylint@4.0.4
+    - pyright@1.1.408
+    - semgrep@1.150.0
+    - sourcery@1.43.0
+    - trivy@0.69.0
+    - actionlint@1.7.10
+    - bandit@1.9.3
+    - black@26.1.0
+    - checkov@3.2.499
     - git-diff-check
     - isort@7.0.0
-    - markdownlint@0.45.0
-    - prettier@3.6.2
-    - ruff@0.14.3
-    - trufflehog@3.90.12
-    - yamllint@1.37.1
+    - markdownlint@0.47.0
+    - prettier@3.8.1
+    - ruff@0.14.14
+    - trufflehog@3.92.5
+    - yamllint@1.38.0
 actions:
   enabled:
     - trunk-announce
