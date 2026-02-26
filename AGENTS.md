@@ -6,10 +6,11 @@ This repository hosts Rokt's reusable GitHub Actions workflows shared across pro
 
 ## Architecture
 
-The repo has two main components:
+The repo has three main components:
 
 1. **Reusable GitHub Actions Workflows** (`.github/workflows/`) — callable workflows that other ROKT repos reference via `uses: ROKT/rokt-workflows/.github/workflows/<workflow>.yml@main`.
-2. **Trunk Plugin** (`rokt-trunk-plugin/`) — a custom Trunk linter plugin that other repos can install to enforce coding standards. Currently includes a `validate-actions-versions` linter that ensures all GitHub Actions are pinned to commit SHAs.
+2. **Composite Actions** (`actions/`) — reusable action steps that other ROKT repos reference via `uses: ROKT/rokt-workflows/actions/<action>@main`.
+3. **Trunk Plugin** (`rokt-trunk-plugin/`) — a custom Trunk linter plugin that other repos can install to enforce coding standards. Currently includes a `validate-actions-versions` linter that ensures all GitHub Actions are pinned to commit SHAs.
 
 ```text
 rokt-workflows/
@@ -17,6 +18,8 @@ rokt-workflows/
     oss_pr_opened_notification.yml   # Google Chat notification on PR open
     trunk-lint.yml                   # Trunk lint CI check
     trunk-upgrade.yml                # Monthly trunk config upgrade + auto-PR
+  actions/                   # Composite actions consumed by other repos
+    generate-changelog/              # Auto-generate Keep a Changelog from git history
   rokt-trunk-plugin/         # Trunk plugin consumed by other repos
     linters/
       validate-actions-versions/     # Custom linter (Python)
@@ -104,6 +107,8 @@ Dependabot is configured for weekly GitHub Actions dependency updates.
 | `.github/CODEOWNERS`                                   | Team ownership (`@ROKT/sdk-engineering`)                              |
 | `.github/pull_request_template.md`                     | PR template                                                           |
 | `.github/dependabot.yml`                               | Dependabot config for GitHub Actions updates                          |
+| `actions/`                                             | Composite GitHub Actions consumed by other repos                      |
+| `actions/generate-changelog/`                          | Auto-generate Keep a Changelog section from git history + PR titles   |
 | `rokt-trunk-plugin/`                                   | Trunk plugin with custom linters                                      |
 | `rokt-trunk-plugin/linters/validate-actions-versions/` | Custom linter ensuring Actions are SHA-pinned                         |
 | `.trunk/trunk.yaml`                                    | Trunk CLI and linter configuration                                    |
