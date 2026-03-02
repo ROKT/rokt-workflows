@@ -42,7 +42,7 @@ lint:
         - name: PYTHONPATH
           value: ${workspace}/.venv/lib/python3.10/site-packages
   enabled:
-    - osv-scanner@2.3.2
+    - osv-scanner@2.3.3
     - taplo@0.10.0
     - validate-actions-versions
     - codespell@2.4.1
@@ -50,21 +50,21 @@ lint:
     - gitleaks@8.30.0
     - kube-linter@0.7.2
     - mypy@1.19.1
-    - pylint@4.0.4
+    - pylint@4.0.5
     - pyright@1.1.408
-    - semgrep@1.150.0
+    - semgrep@1.153.1
     - sourcery@1.43.0
     - trivy@0.69.0
-    - actionlint@1.7.10
-    - bandit@1.9.3
+    - actionlint@1.7.11
+    - bandit@1.9.4
     - black@26.1.0
-    - checkov@3.2.499
+    - checkov@3.2.506
     - git-diff-check
-    - isort@7.0.0
+    - isort@8.0.1
     - markdownlint@0.47.0
     - prettier@3.8.1
-    - ruff@0.14.14
-    - trufflehog@3.92.5
+    - ruff@0.15.4
+    - trufflehog@3.93.6
     - yamllint@1.38.0
 actions:
   enabled:
