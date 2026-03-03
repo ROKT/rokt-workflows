@@ -150,9 +150,7 @@ def _kit_name_from_path(path: str, kits_path: str) -> str | None:
         return ""
     segments = rest.split("/")
     # Only treat as a specific kit when there is a real subdir (e.g. Kits/braze/...)
-    if len(segments) < 2:
-        return ""  # file or single segment directly under kits root → generic Kits
-    return segments[0].lower()
+    return "" if len(segments) < 2 else segments[0].lower()
 
 
 def _classify_commit_scope(sha: str, kits_path: str) -> str:
@@ -170,10 +168,11 @@ def _classify_commit_scope(sha: str, kits_path: str) -> str:
         if not path:
             continue
         if path.startswith(prefix) or path == kits_path.rstrip("/"):
-            kit = _kit_name_from_path(path, kits_path)
-            if kit:
-                return kit
-            return "Kits"  # under kits_path but no subdir (e.g. file at kits/foo)
+            return (
+                kit
+                if (kit := _kit_name_from_path(path, kits_path))
+                else "Kits"  # under kits_path but no subdir (e.g. file at kits/foo)
+            )
     return "Core"
 
 
@@ -325,37 +324,28 @@ def _build_section_with_scopes(entries: list[Entry]) -> str:
     kit_entries = [e for e in entries if e.scope and e.scope != "Core"]
 
     if core_entries:
-        lines.append("### Core")
-        lines.append("")
+        lines.extend(["### Core", ""])
         for category in CATEGORY_ORDER:
-            cat_entries = [
-                e.text for e in core_entries if e.category == category
-            ]
+            cat_entries = [e.text for e in core_entries if e.category == category]
             if not cat_entries:
                 continue
-            lines.append(f"#### {category}")
-            lines.append("")
+            lines.extend([f"#### {category}", ""])
             lines.extend(cat_entries)
             lines.append("")
 
     if kit_entries:
-        lines.append("### Kits")
-        lines.append("")
+        lines.extend(["### Kits", ""])
         kit_names = sorted({e.scope for e in kit_entries if e.scope})
         for kit in kit_names:
             scope_entries = [e for e in kit_entries if e.scope == kit]
             if not scope_entries:
                 continue
-            lines.append(f"#### {_scope_display_name(kit)}")
-            lines.append("")
+            lines.extend([f"#### {_scope_display_name(kit)}", ""])
             for category in CATEGORY_ORDER:
-                cat_entries = [
-                    e.text for e in scope_entries if e.category == category
-                ]
+                cat_entries = [e.text for e in scope_entries if e.category == category]
                 if not cat_entries:
                     continue
-                lines.append(f"##### {category}")
-                lines.append("")
+                lines.extend([f"##### {category}", ""])
                 lines.extend(cat_entries)
                 lines.append("")
 
