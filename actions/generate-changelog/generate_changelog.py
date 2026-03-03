@@ -134,7 +134,12 @@ def _capitalise_first(text: str) -> str:
 
 
 def _kit_name_from_path(path: str, kits_path: str) -> str | None:
-    """Extract the first path component under kits_path as the kit name, or None."""
+    """Extract the first path component under kits_path as the kit name, or None.
+
+    Paths with only one segment under the kits root (e.g. Kits/README.md) are
+    treated as generic Kits root changes and return "" so they are not
+    misclassified as a bogus kit subsection.
+    """
     prefix = kits_path.rstrip("/") + "/"
     if not path.startswith(prefix) and path != kits_path.rstrip("/"):
         return None
@@ -143,7 +148,11 @@ def _kit_name_from_path(path: str, kits_path: str) -> str | None:
     rest = path[len(prefix) :].lstrip("/")
     if not rest:
         return ""
-    return rest.split("/")[0].lower()
+    segments = rest.split("/")
+    # Only treat as a specific kit when there is a real subdir (e.g. Kits/braze/...)
+    if len(segments) < 2:
+        return ""  # file or single segment directly under kits root → generic Kits
+    return segments[0].lower()
 
 
 def _classify_commit_scope(sha: str, kits_path: str) -> str:
