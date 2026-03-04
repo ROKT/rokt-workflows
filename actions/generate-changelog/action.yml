@@ -31,6 +31,14 @@ inputs:
       (e.g., "chore,ci,test,build"). Breaking changes are never excluded.
     required: false
     default: ""
+  kits-path:
+    description: >
+      Path prefix for kit sub-repos (e.g., "Kits"). When set, commits are
+      classified as Core vs Kits by changed files; the changelog section is
+      split into "Core" and "Kits" subsections. Leave empty for a single
+      flat changelog (default).
+    required: false
+    default: ""
 
 outputs:
   release-notes:
@@ -49,3 +57,4 @@ runs:
         INPUT_TAG_PREFIX: ${{ inputs.tag-prefix }}
         INPUT_CHANGELOG_PATH: ${{ inputs.changelog-path }}
         INPUT_EXCLUDE_TYPES: ${{ inputs.exclude-types }}
+        INPUT_KITS_PATH: ${{ inputs.kits-path }}
