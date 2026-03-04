@@ -87,6 +87,7 @@ class Config:
     tag_prefix: str
     changelog_path: Path
     exclude_types: set[str]
+    kits_path: str = ""
     today: str = field(default_factory=lambda: date.today().isoformat())
 
 
@@ -96,6 +97,7 @@ class Entry:
 
     category: str
     text: str
+    scope: str | None = None  # "Core" | "Kits" when kits_path is set
 
 
 # ---------------------------------------------------------------------------
@@ -105,14 +107,17 @@ class Entry:
 
 def _run_cmd(cmd: list[str]) -> str:
     """Run a subprocess and return stripped stdout, or empty string on failure."""
-    result = (
-        subprocess.run(  # nosec B603 -- only invoked with fixed arg lists, no shell
-            cmd,
-            capture_output=True,
-            text=True,
-            check=False,
+    try:
+        result = (
+            subprocess.run(  # nosec B603 -- only invoked with fixed arg lists, no shell
+                cmd,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
         )
-    )
+    except FileNotFoundError:
+        return ""
     return "" if result.returncode != 0 else result.stdout.strip()
 
 
@@ -126,6 +131,49 @@ def _map_category(cc_type: str, *, breaking: bool) -> str:
 def _capitalise_first(text: str) -> str:
     """Uppercase the first character, leaving the rest unchanged."""
     return text[0].upper() + text[1:] if text else text
+
+
+def _kit_name_from_path(path: str, kits_path: str) -> str | None:
+    """Extract the first path component under kits_path as the kit name, or None.
+
+    Paths with only one segment under the kits root (e.g. Kits/README.md) are
+    treated as generic Kits root changes and return "" so they are not
+    misclassified as a bogus kit subsection.
+    """
+    prefix = kits_path.rstrip("/") + "/"
+    if not path.startswith(prefix) and path != kits_path.rstrip("/"):
+        return None
+    if path == kits_path.rstrip("/"):
+        return ""
+    rest = path[len(prefix) :].lstrip("/")
+    if not rest:
+        return ""
+    segments = rest.split("/")
+    # Only treat as a specific kit when there is a real subdir (e.g. Kits/braze/...)
+    return "" if len(segments) < 2 else segments[0].lower()
+
+
+def _classify_commit_scope(sha: str, kits_path: str) -> str:
+    """Classify a commit as 'Core' or a kit name based on changed file paths."""
+    if not kits_path:
+        return "Core"
+    out = _run_cmd(
+        ["git", "show", "--name-only", "--format=", sha, "--"],
+    )
+    if not out:
+        return "Core"
+    prefix = kits_path.rstrip("/") + "/"
+    for line in out.splitlines():
+        path = line.strip()
+        if not path:
+            continue
+        if path.startswith(prefix) or path == kits_path.rstrip("/"):
+            return (
+                kit
+                if (kit := _kit_name_from_path(path, kits_path))
+                else "Kits"  # under kits_path but no subdir (e.g. file at kits/foo)
+            )
+    return "Core"
 
 
 # ---------------------------------------------------------------------------
@@ -230,15 +278,27 @@ def collect_entries(last_tag: str | None, cfg: Config) -> list[Entry]:
     for line in log_output.splitlines():
         if not line.strip():
             continue
-        _sha, message = line.split(" ", 1)
+        parts = line.split(" ", 1)
+        if len(parts) != 2:
+            continue
+        sha, message = parts[0], parts[1]
         if entry := _entry_from_commit(message, cfg):
+            if cfg.kits_path:
+                entry.scope = _classify_commit_scope(sha, cfg.kits_path)
             entries.append(entry)
 
     return entries
 
 
-def build_section(entries: list[Entry]) -> str:
+def build_section(entries: list[Entry], cfg: Config) -> str:
     """Render categorised entries as a Keep a Changelog markdown section."""
+    if not cfg.kits_path:
+        return _build_section_flat(entries)
+    return _build_section_with_scopes(entries)
+
+
+def _build_section_flat(entries: list[Entry]) -> str:
+    """Single flat section grouped only by category (no Core/Kits)."""
     lines: list[str] = []
     for category in CATEGORY_ORDER:
         cat_entries = [e.text for e in entries if e.category == category]
@@ -247,6 +307,48 @@ def build_section(entries: list[Entry]) -> str:
         lines.extend((f"### {category}", ""))
         lines.extend(cat_entries)
         lines.append("")
+    return "\n".join(lines)
+
+
+def _scope_display_name(scope: str) -> str:
+    """Turn a scope key (e.g. 'braze') into a display name (e.g. 'Braze')."""
+    if not scope:
+        return scope
+    return scope[0].upper() + (scope[1:] if len(scope) > 1 else "")
+
+
+def _build_section_with_scopes(entries: list[Entry]) -> str:
+    """Section split into Core and Kits; Kits further grouped by individual kit."""
+    lines: list[str] = []
+    core_entries = [e for e in entries if e.scope == "Core"]
+    kit_entries = [e for e in entries if e.scope and e.scope != "Core"]
+
+    if core_entries:
+        lines.extend(["### Core", ""])
+        for category in CATEGORY_ORDER:
+            cat_entries = [e.text for e in core_entries if e.category == category]
+            if not cat_entries:
+                continue
+            lines.extend([f"#### {category}", ""])
+            lines.extend(cat_entries)
+            lines.append("")
+
+    if kit_entries:
+        lines.extend(["### Kits", ""])
+        kit_names = sorted({e.scope for e in kit_entries if e.scope})
+        for kit in kit_names:
+            scope_entries = [e for e in kit_entries if e.scope == kit]
+            if not scope_entries:
+                continue
+            lines.extend([f"#### {_scope_display_name(kit)}", ""])
+            for category in CATEGORY_ORDER:
+                cat_entries = [e.text for e in scope_entries if e.category == category]
+                if not cat_entries:
+                    continue
+                lines.extend([f"##### {category}", ""])
+                lines.extend(cat_entries)
+                lines.append("")
+
     return "\n".join(lines)
 
 
@@ -376,6 +478,8 @@ def main() -> None:
         os.environ.get("INPUT_REPO_URL") or f"https://github.com/{repo}"
     ).rstrip("/")
 
+    kits_path = (os.environ.get("INPUT_KITS_PATH") or "").strip()
+
     cfg = Config(
         version=version,
         repo_url=repo_url,
@@ -388,12 +492,15 @@ def main() -> None:
             for t in os.environ.get("INPUT_EXCLUDE_TYPES", "").split(",")
             if t.strip()
         },
+        kits_path=kits_path,
     )
 
     print("::group::Generate Changelog")
     print(f"Version: {cfg.version}")
     print(f"Changelog: {cfg.changelog_path}")
     print(f"Repo URL: {cfg.repo_url}")
+    if cfg.kits_path:
+        print(f"Kits path: {cfg.kits_path} (Core/Kits classification enabled)")
 
     last_tag = find_last_tag(cfg.tag_prefix)
     if last_tag:
@@ -412,7 +519,7 @@ def main() -> None:
         _write_github_output("release-notes", "No notable changes.")
         return
 
-    section_body = build_section(entries)
+    section_body = build_section(entries, cfg)
 
     print("\nGenerated changelog section:\n---")
     print(f"## [{cfg.version}] - {cfg.today}\n")
