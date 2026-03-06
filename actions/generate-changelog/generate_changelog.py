@@ -25,8 +25,8 @@ CATEGORY_ORDER: list[str] = [
     "Removed",
     "Deprecated",
     "Added",
-    "Changed",
     "Fixed",
+    "Changed",
     "Security",
 ]
 
@@ -384,6 +384,8 @@ def _insert_version_section(
 
         if in_unreleased and not inserted:
             if _VERSION_HEADING_REGEX.match(stripped):
+                while output and output[-1] == "\n":
+                    output.pop()
                 output.extend(("\n", new_section + "\n", "\n", line))
                 inserted = True
                 continue
@@ -393,6 +395,8 @@ def _insert_version_section(
         output.append(line)
 
     if in_unreleased and not inserted:
+        while output and output[-1] == "\n":
+            output.pop()
         output.extend(("\n", new_section + "\n"))
     return output
 
@@ -442,7 +446,11 @@ def update_changelog(
     result = _insert_version_section(original, new_section)
     result = _update_comparison_links(result, cfg, last_tag)
 
-    path.write_text("".join(result), encoding="utf-8")
+    # Ensure markdownlint-compatible trailing newline at EOF.
+    content = "".join(result)
+    if not content.endswith("\n"):
+        content += "\n"
+    path.write_text(content, encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------
