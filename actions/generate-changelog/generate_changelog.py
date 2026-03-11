@@ -297,6 +297,13 @@ def build_section(entries: list[Entry], cfg: Config) -> str:
     return _build_section_with_scopes(entries)
 
 
+def _join_markdown_lines(lines: list[str]) -> str:
+    """Join markdown lines without leaving trailing blank lines in the section."""
+    while lines and lines[-1] == "":
+        lines.pop()
+    return "\n".join(lines)
+
+
 def _build_section_flat(entries: list[Entry]) -> str:
     """Single flat section grouped only by category (no Core/Kits)."""
     lines: list[str] = []
@@ -307,7 +314,7 @@ def _build_section_flat(entries: list[Entry]) -> str:
         lines.extend((f"### {category}", ""))
         lines.extend(cat_entries)
         lines.append("")
-    return "\n".join(lines)
+    return _join_markdown_lines(lines)
 
 
 def _scope_display_name(scope: str) -> str:
@@ -349,7 +356,7 @@ def _build_section_with_scopes(entries: list[Entry]) -> str:
                 lines.extend(cat_entries)
                 lines.append("")
 
-    return "\n".join(lines)
+    return _join_markdown_lines(lines)
 
 
 # ---------------------------------------------------------------------------
@@ -370,6 +377,7 @@ def _insert_version_section(
     new_section: str,
 ) -> list[str]:
     """Insert *new_section* after the ``[Unreleased]`` heading."""
+    new_section = new_section.rstrip("\n")
     output: list[str] = []
     in_unreleased = False
     inserted = False
@@ -440,7 +448,7 @@ def update_changelog(
     path = cfg.changelog_path
     _ensure_changelog_exists(path)
 
-    new_section = f"## [{cfg.version}] - {cfg.today}\n\n{section_body}"
+    new_section = f"## [{cfg.version}] - {cfg.today}\n\n{section_body.rstrip()}"
 
     original = path.read_text(encoding="utf-8").splitlines(keepends=True)
     result = _insert_version_section(original, new_section)
