@@ -85,7 +85,7 @@ trunk check enable validate-actions-versions
 
 ### Enabled Linters (via Trunk)
 
-actionlint, bandit, black, checkov, codespell, flake8, git-diff-check, gitleaks, isort, kube-linter, markdownlint, mypy, osv-scanner, prettier, pylint, pyright, ruff, semgrep, sourcery, taplo, trivy, trufflehog, validate-actions-versions, yamllint
+actionlint, bandit, black, checkov, codespell, flake8, git-diff-check, gitleaks, isort, kube-linter, markdownlint, mypy, osv-scanner, prettier, pylint, pyright, ruff, semgrep, sourcery, taplo, trufflehog, validate-actions-versions, yamllint
 
 ## CI/CD Pipeline
 
