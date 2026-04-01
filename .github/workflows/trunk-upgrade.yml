@@ -24,7 +24,10 @@ jobs:
           token: ${{ inputs.token || github.token }}
 
       - name: Trunk Upgrade
+        id: trunk-upgrade
         uses: trunk-io/trunk-action/upgrade@75699af9e26881e564e9d832ef7dc3af25ec031b # v1.2.4
+        with:
+          github-token: ${{ inputs.token || github.token }}
 
       - name: Check if trunk config file changed
         id: version-changed
@@ -32,28 +35,22 @@ jobs:
         with:
           files: .trunk/trunk.yaml
 
-      - name: Create Pull Request
-        if: steps.version-changed.outputs.any_changed == 'true'
-        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
-        with:
-          token: ${{ inputs.token || github.token }}
-          commit-message: "chore: update trunk configuration"
-          title: "chore: update trunk configuration"
-          body: |
-            This PR updates the trunk configuration based on the monthly trunk upgrade.
-
-            Changes were detected in `.trunk/trunk.yaml`. Please review the changes and merge if appropriate.
-          branch: update-trunk-config
-          delete-branch: true
-
       - name: Output Summary
         env:
           CHANGES_DETECTED: ${{ steps.version-changed.outputs.any_changed }}
+          PULL_REQUEST_OPERATION: ${{ steps.trunk-upgrade.outputs.pull-request-operation }}
+          PULL_REQUEST_URL: ${{ steps.trunk-upgrade.outputs.pull-request-url }}
         run: |
           if [ "$CHANGES_DETECTED" = "true" ]; then
             echo "## 🎉 Trunk Upgrade Summary" >> $GITHUB_STEP_SUMMARY
             echo "A trunk upgrade was performed and changes were detected in \`.trunk/trunk.yaml\`." >> $GITHUB_STEP_SUMMARY
-            echo "A pull request has been created to review these changes." >> $GITHUB_STEP_SUMMARY
+            if [ -n "$PULL_REQUEST_URL" ]; then
+              if [ "$PULL_REQUEST_OPERATION" = "updated" ]; then
+                echo "The existing pull request was updated: $PULL_REQUEST_URL" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "A pull request was created: $PULL_REQUEST_URL" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
           else
             echo "## ℹ️ Trunk Upgrade Summary" >> $GITHUB_STEP_SUMMARY
             echo "No changes were detected in \`.trunk/trunk.yaml\` during the upgrade process." >> $GITHUB_STEP_SUMMARY
