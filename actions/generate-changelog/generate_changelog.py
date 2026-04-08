@@ -417,20 +417,21 @@ def _update_comparison_links(
     """Rewrite the ``[unreleased]`` link and add a new version link."""
     output: list[str] = []
     updated = False
+    new_tag = f"{cfg.tag_prefix}{cfg.version}"
 
     for line in lines:
         if not updated and _UNRELEASED_LINK_REGEX.match(line):
             output.append(
-                f"[unreleased]: {cfg.repo_url}/compare/{cfg.version}...HEAD\n",
+                f"[unreleased]: {cfg.repo_url}/compare/{new_tag}...HEAD\n",
             )
             if last_tag:
                 output.append(
                     f"[{cfg.version}]: "
-                    f"{cfg.repo_url}/compare/{last_tag}...{cfg.version}\n",
+                    f"{cfg.repo_url}/compare/{last_tag}...{new_tag}\n",
                 )
             else:
                 output.append(
-                    f"[{cfg.version}]: " f"{cfg.repo_url}/releases/tag/{cfg.version}\n",
+                    f"[{cfg.version}]: " f"{cfg.repo_url}/releases/tag/{new_tag}\n",
                 )
             updated = True
         else:
