@@ -80,6 +80,7 @@ trunk check enable validate-actions-versions
 Auto-generates a [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) section from git history.
 Extracts PR numbers from squash-merge commits, fetches PR titles via the GitHub CLI, categorises
 them by conventional-commit prefix, updates `CHANGELOG.md` in-place, and outputs release-notes markdown.
+For an example of generated output, see [rokt-ux-helper-ios/CHANGELOG.md](https://github.com/ROKT/rokt-ux-helper-ios/blob/main/CHANGELOG.md).
 
 The calling workflow must check out the repository with `fetch-depth: 0`.
 
