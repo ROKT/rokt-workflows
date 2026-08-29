@@ -75,10 +75,12 @@ you.
 4. **Zizmor never blocks.** `.github/workflows/zizmor.yml` sets `continue-on-error: true`
    deliberately, and the workflow is `paths:`-scoped to `.github/workflows/**` and `actions/**`, so
    a change under `rokt-trunk-plugin/` is never scanned at all.
-5. **`notify-gchat` fails on every PR raised in this repo.** `oss_pr_opened_notification.yml`
-   triggers on `pull_request` as well as `workflow_call`, but `secrets.gchat_webhook` only exists
-   on the `workflow_call` path, so a `pull_request` run gets an empty `webhookUrl` and fails. Not
-   your change.
+5. **`notify-gchat` fails on every Dependabot PR, and only those.**
+   `oss_pr_opened_notification.yml` triggers on `pull_request` as well as `workflow_call` and reads
+   `secrets.gchat_webhook`, which resolves from the repository secret on a normal PR. GitHub gives
+   a `dependabot[bot]` run its own separate secrets store, and this repo has nothing in it, so
+   `webhookUrl` is empty and the action fails. Since almost every PR here is Dependabot's, that
+   check reads as permanently broken. Not your change.
 6. **Trunk Lint can turn red on `main` with nobody committing.** Semgrep's rules come from its
    registry at run time, not from the version pinned in `.trunk/trunk.yaml`, so a newly published
    rule reddens a file that was green yesterday. `.github/dependabot.yml` is red this way today (a
