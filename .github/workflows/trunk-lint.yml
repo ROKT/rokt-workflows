@@ -11,6 +11,10 @@ jobs:
   lint:
     name: Run Trunk Lint
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Diff-scoped mode posts findings as PR annotations via the Checks API.
+      checks: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -39,9 +43,11 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
+      # check-mode is deliberately unset: the action then autodetects
+      # pull_request (diff vs the base sha) on PRs and all on workflow_dispatch.
+      # v2.0.0 is required -- it adds the one-shot git auth that lets the
+      # diff-scoped fetch work with persist-credentials: false.
       - name: Trunk Check
-        uses: trunk-io/trunk-action@04ba50e7658c81db7356da96657e6e77f220bfa3 # v1.3.1
-        with:
-          check-mode: all
+        uses: trunk-io/trunk-action@e1234e67a86010d61ddac8d8ebf4b783e2ffd2fa # v2.0.0
         env:
           PYTHONPATH: ${{ github.workspace }}/.venv/lib/python3.10/site-packages
