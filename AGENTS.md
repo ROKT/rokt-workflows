@@ -73,6 +73,88 @@ trunk plugins add https://github.com/ROKT/rokt-workflows <ref> --id=rokt-trunk-p
 trunk check enable validate-actions-versions
 ```
 
+## Composite Actions Reference
+
+### `generate-changelog`
+
+Auto-generates a [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) section from git history.
+Extracts PR numbers from squash-merge commits, fetches PR titles via the GitHub CLI, categorises
+them by conventional-commit prefix, updates `CHANGELOG.md` in-place, and outputs release-notes markdown.
+For an example of generated output, see [rokt-ux-helper-ios/CHANGELOG.md](https://github.com/ROKT/rokt-ux-helper-ios/blob/main/CHANGELOG.md).
+
+The calling workflow must check out the repository with `fetch-depth: 0`.
+
+**Conventional-commit type mapping:**
+
+| CC type       | Changelog category |
+| ------------- | ------------------ |
+| `feat`        | Added              |
+| `fix`         | Fixed              |
+| `security`    | Security           |
+| `deprecate`   | Deprecated         |
+| `revert`      | Removed            |
+| anything else | Changed            |
+
+Breaking changes (via `!` suffix or `BREAKING` keyword in title) always land in **Breaking Changes**,
+regardless of `exclude-types`. Merge commits, `Prepare release`, and similar are skipped automatically.
+
+**Inputs:**
+
+| Input            | Required | Default        | Description                                                                                                                                                       |
+| ---------------- | -------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `version`        | yes      |                | New version number (e.g., `4.17.0`)                                                                                                                               |
+| `repo-url`       | no       | Current repo   | GitHub repository URL for comparison links                                                                                                                        |
+| `tag-prefix`     | no       | Auto-detect    | Tag prefix (e.g., `v`). Leave empty to auto-detect both `v4.x` and `4.x`                                                                                          |
+| `changelog-path` | no       | `CHANGELOG.md` | Path to the changelog file                                                                                                                                        |
+| `exclude-types`  | no       |                | Comma-separated conventional-commit types to exclude (e.g., `chore,ci,test`). Breaking changes are never excluded.                                                |
+| `kits-path`      | no       |                | Path prefix for kit sub-repos (e.g., `Kits`). When set, commits are classified as Core vs Kits by changed files; the changelog section is split into subsections. |
+
+**Outputs:**
+
+| Output          | Description                             |
+| --------------- | --------------------------------------- |
+| `release-notes` | Generated changelog section as markdown |
+
+## Reusable Workflows Reference
+
+### `trunk-upgrade.yml`
+
+Runs `trunk upgrade`, detects changes in `.trunk/trunk.yaml`, and creates (or updates) a PR automatically.
+Writes a job summary indicating whether changes were found and what PR was opened.
+
+When called from another repo, pass an app token via the `token` input so that the resulting PR
+triggers CI in the calling repo (GitHub's default token does not trigger workflows created by itself):
+
+```yaml
+jobs:
+  trunk-upgrade:
+    uses: ROKT/rokt-workflows/.github/workflows/trunk-upgrade.yml@main
+    with:
+      token: ${{ steps.generate-token.outputs.token }}
+    permissions:
+      contents: write
+      pull-requests: write
+```
+
+### `oss_pr_opened_notification.yml`
+
+Sends a Google Chat card notification when a PR is opened or reopened. Only fires on
+`pull_request` events (not on `workflow_call` direct invocations). Requires a `gchat_webhook`
+secret with the destination webhook URL.
+
+### `validate-actions-versions` linter
+
+Enforces that every `uses:` reference in GitHub Actions workflow files is pinned to a full 40-character
+commit SHA rather than a mutable tag (e.g., `@v1`).
+
+**Skip rules** (these references are allowed without SHA pinning):
+
+- Local composite actions starting with `.` (relative paths)
+- References starting with `ROKT/rokt-workflows/` (this repo's own actions)
+
+**File scope:** checks `.github/workflows/*.yml`, `.github/workflows/*.yaml`,
+`.github/actions/*.yml`, and `.github/actions/*.yaml`.
+
 ## Build, Test & Lint Commands
 
 | Command                           | Description                          |

@@ -39,13 +39,14 @@ updates `CHANGELOG.md` in-place, and outputs the release-notes markdown.
 The calling workflow must check out the repository with `fetch-depth: 0` so that full git
 history and tags are available.
 
-| Input            | Required | Default        | Description                                                                  |
-| ---------------- | -------- | -------------- | ---------------------------------------------------------------------------- |
-| `version`        | yes      |                | New version number (e.g., `4.17.0`)                                          |
-| `repo-url`       | no       | Current repo   | GitHub repository URL for comparison links                                   |
-| `tag-prefix`     | no       | Auto-detect    | Tag prefix (e.g., `v`). Leave empty to auto-detect both `v4.x` and `4.x`     |
-| `changelog-path` | no       | `CHANGELOG.md` | Path to the changelog file                                                   |
-| `exclude-types`  | no       |                | Comma-separated conventional-commit types to exclude (e.g., `chore,ci,test`) |
+| Input            | Required | Default        | Description                                                                                                                                                       |
+| ---------------- | -------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `version`        | yes      |                | New version number (e.g., `4.17.0`)                                                                                                                               |
+| `repo-url`       | no       | Current repo   | GitHub repository URL for comparison links                                                                                                                        |
+| `tag-prefix`     | no       | Auto-detect    | Tag prefix (e.g., `v`). Leave empty to auto-detect both `v4.x` and `4.x`                                                                                          |
+| `changelog-path` | no       | `CHANGELOG.md` | Path to the changelog file                                                                                                                                        |
+| `exclude-types`  | no       |                | Comma-separated conventional-commit types to exclude (e.g., `chore,ci,test`). Breaking changes are never excluded.                                                |
+| `kits-path`      | no       |                | Path prefix for kit sub-repos (e.g., `Kits`). When set, commits are classified as Core vs Kits by changed files; the changelog section is split into subsections. |
 
 | Output          | Description                             |
 | --------------- | --------------------------------------- |
