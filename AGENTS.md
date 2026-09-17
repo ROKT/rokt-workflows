@@ -105,7 +105,6 @@ Dependabot is configured for weekly GitHub Actions dependency updates.
 | ------------------------------------------------------ | --------------------------------------------------------------------- |
 | `.github/workflows/`                                   | Reusable GitHub Actions workflows                                     |
 | `.github/CODEOWNERS`                                   | Team ownership (`@ROKT/sdk-engineering`)                              |
-| `.github/pull_request_template.md`                     | PR template                                                           |
 | `.github/dependabot.yml`                               | Dependabot config for GitHub Actions updates                          |
 | `actions/`                                             | Composite GitHub Actions consumed by other repos                      |
 | `actions/generate-changelog/`                          | Auto-generate Keep a Changelog section from git history + PR titles   |
