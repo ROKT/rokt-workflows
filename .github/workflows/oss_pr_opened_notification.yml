@@ -15,12 +15,18 @@ permissions:
 jobs:
   notify-gchat:
     runs-on: ubuntu-latest
+    # GitHub withholds repository secrets from Dependabot and fork PR runs, so
+    # the webhook can arrive empty and the action then hard-fails the check.
+    # `secrets` is not a context available to any `if:`, but `env` is available
+    # to a step `if:` -- hence this job-level hop. Do not inline it back.
+    env:
+      GCHAT_WEBHOOK: ${{ secrets.gchat_webhook }}
     steps:
       - name: Send Google Chat Notification for PR
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && env.GCHAT_WEBHOOK != ''
         uses: SimonScholz/google-chat-action@3b3519e5102dba8aa5046fd711c4b553586409bb #v1.1.0
         with:
-          webhookUrl: ${{ secrets.gchat_webhook }}
+          webhookUrl: ${{ env.GCHAT_WEBHOOK }}
           title: PR Created - ${{ github.event.pull_request.title }}
           imageUrl: ${{ github.event.pull_request.user.avatar_url }}
           threadKey: ${{ github.repository }}-${{ github.event.pull_request.number }}
