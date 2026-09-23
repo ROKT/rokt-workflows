@@ -97,7 +97,7 @@ CI runs on **GitHub Actions** (not Buildkite):
 | `trunk-upgrade.yml`              | Monthly cron (1st of month), manual, callable | Runs `trunk upgrade`, creates auto-PR if `.trunk/trunk.yaml` changes |
 | `oss_pr_opened_notification.yml` | PR opened/reopened, callable                  | Sends Google Chat notification for new/reopened PRs                  |
 
-Dependabot is configured for weekly GitHub Actions dependency updates.
+Dependabot is configured for weekly GitHub Actions dependency updates, with a 7-day cooldown so newly published versions are not proposed until they have been available for a week.
 
 ## Project Structure
 
