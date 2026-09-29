@@ -37,7 +37,8 @@ updates `CHANGELOG.md` in-place, and outputs the release-notes markdown.
 ```
 
 The calling workflow must check out the repository with `fetch-depth: 0` so that full git
-history and tags are available.
+history and tags are available. The previous release is the highest version tag reachable from the
+checked-out commit, so a run on a maintenance branch ignores tags cut from newer majors on `main`.
 
 | Input            | Required | Default        | Description                                                                  |
 | ---------------- | -------- | -------------- | ---------------------------------------------------------------------------- |
