@@ -182,8 +182,8 @@ def _classify_commit_scope(sha: str, kits_path: str) -> str:
 
 
 def find_last_tag(tag_prefix: str) -> str | None:
-    """Find the latest semver release tag, handling mixed v-prefix conventions."""
-    raw_tags = _run_cmd(["git", "tag"]).splitlines()
+    """Find the latest semver release tag reachable from HEAD (mixed v-prefix ok)."""
+    raw_tags = _run_cmd(["git", "tag", "--merged", "HEAD"]).splitlines()
     if not raw_tags:
         return None
 
