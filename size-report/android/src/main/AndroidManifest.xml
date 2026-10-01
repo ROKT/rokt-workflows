@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:label="release-size-report">
+        <!-- Declared so aapt's generated keep rules make it an R8 root; without that the whole
+             starting app is dead code and Compose is shrunk out of the baseline. -->
+        <activity
+            android:name=".HostActivity"
+            android:exported="false" />
+    </application>
+</manifest>
