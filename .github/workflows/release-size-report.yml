@@ -16,8 +16,9 @@ name: Release Size Report
 #
 # What each product's releases report lives in size-report/repos.json, shared with the backfill.
 #
-# Advisory by design: give the calling job `continue-on-error: true`. A failed measurement
-# leaves the release body untouched rather than half-written. See size-report/README.md.
+# Advisory by design: the measure job is `continue-on-error`, because a calling job that `uses:` a
+# reusable workflow cannot set it. A failed measurement leaves the release body untouched rather
+# than half-written, and never turns the release run red. See size-report/README.md.
 
 on:
   workflow_call:
@@ -71,6 +72,7 @@ permissions:
 jobs:
   measure:
     name: Measure and update release
+    continue-on-error: true
     runs-on: ${{ inputs.platform == 'ios' && inputs.ios_runner || 'ubuntu-latest' }}
     timeout-minutes: 120
     permissions:
