@@ -85,6 +85,12 @@ you.
    registry at run time, not from the version pinned in `.trunk/trunk.yaml`, so a newly published
    rule reddens a file that was green yesterday. `.github/dependabot.yml` is red this way today (a
    missing `cooldown` block) — check whether it still is before assuming your diff caused it.
+7. **`size-report/` is a measurement method, not just code.** Every number it writes into a
+   release body is only comparable with numbers from the same fixture, so any change to
+   `size-report/android/` or `size-report/ios/` (toolchain, starting app, entry points) moves every
+   future figure — while the bodies already written keep the old ones. Treat such a change as a
+   method change: say so in the PR and re-run the backfill. `release-size-report.yml` is also the
+   one workflow here that writes to the caller's repository (`gh release edit`).
 
 ## Repository etiquette
 

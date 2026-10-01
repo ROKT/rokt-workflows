@@ -1,0 +1,205 @@
+name: Release Size Report
+
+# Measures what a just-published release adds to a consumer's app, and writes it into that
+# release's description between size-impact markers. Call it after the release exists:
+#
+#   size-report:
+#     needs: <the job that creates the release>
+#     permissions:
+#       contents: write
+#     uses: ROKT/rokt-workflows/.github/workflows/release-size-report.yml@<sha>
+#     with:
+#       product: mparticle-android
+#       platform: android
+#       version: 6.1.4
+#       workflows_ref: <the same sha>
+#
+# What each product's releases report lives in size-report/repos.json, shared with the backfill.
+#
+# Advisory by design: give the calling job `continue-on-error: true`. A failed measurement
+# leaves the release body untouched rather than half-written. See size-report/README.md.
+
+on:
+  workflow_call:
+    inputs:
+      product:
+        description: The size-report/repos.json key for this repository's releases
+        required: true
+        type: string
+      platform:
+        description: android or ios
+        required: true
+        type: string
+      version:
+        description: The published version to measure, without any tag prefix
+        required: true
+        type: string
+      tag:
+        description: The release tag, when it differs from version (e.g. v9.6.1)
+        required: false
+        type: string
+        default: ""
+      rows:
+        description: "Override repos.json: one `<package id>=<label>` per line"
+        required: false
+        type: string
+        default: ""
+      workflows_ref:
+        description: The rokt-workflows ref to measure with; pass the same SHA this workflow is pinned to
+        required: false
+        type: string
+        default: main
+      wait_minutes:
+        description: How long to keep retrying while a just-published version propagates
+        required: false
+        type: number
+        default: 45
+      xcode_version:
+        description: "iOS only: the Xcode to measure with"
+        required: false
+        type: string
+        default: "26.2"
+      ios_runner:
+        description: "iOS only: the macOS runner label, which differs between organisations"
+        required: false
+        type: string
+        default: macos-latest
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    name: Measure and update release
+    runs-on: ${{ inputs.platform == 'ios' && inputs.ios_runner || 'ubuntu-latest' }}
+    timeout-minutes: 120
+    permissions:
+      contents: write
+    env:
+      PRODUCT: ${{ inputs.product }}
+      PLATFORM: ${{ inputs.platform }}
+      VERSION: ${{ inputs.version }}
+      TAG: ${{ inputs.tag || inputs.version }}
+      ROWS_OVERRIDE: ${{ inputs.rows }}
+      WAIT_MINUTES: ${{ inputs.wait_minutes }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Checkout rokt-workflows
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          repository: ROKT/rokt-workflows
+          ref: ${{ inputs.workflows_ref }}
+          persist-credentials: false
+          path: rokt-workflows
+
+      - name: Install JDK 17
+        if: inputs.platform == 'android'
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6
+        with:
+          distribution: zulu
+          java-version: "17"
+
+      - name: Setup Gradle
+        if: inputs.platform == 'android'
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+
+      - name: Select Xcode
+        if: inputs.platform == 'ios'
+        uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
+        with:
+          xcode-version: ${{ inputs.xcode_version }}
+
+      - name: Read what to measure
+        run: |
+          set -euo pipefail
+          if [[ -n "${ROWS_OVERRIDE}" ]]; then
+            rows="${ROWS_OVERRIDE}"
+          else
+            rows="$(python3 rokt-workflows/size-report/rows.py "${PRODUCT}" "${VERSION}")"
+          fi
+          # A random delimiter, so no row can end the multi-line value early.
+          delimiter="ROWS_$(openssl rand -hex 16)"
+          { echo "ROWS<<${delimiter}"; echo "${rows}"; echo "${delimiter}"; } >> "${GITHUB_ENV}"
+
+      # Cold, rokt-sdk-ios's history (past binaries) and stripe-ios take 20+ minutes to clone.
+      - name: Cache SwiftPM repositories
+        if: inputs.platform == 'ios'
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ~/Library/Caches/org.swift.swiftpm/repositories
+          key: swiftpm-size-report-${{ github.run_id }}
+          restore-keys: swiftpm-size-report-
+
+      - name: Find the previous release
+        id: previous
+        run: |
+          set -euo pipefail
+          previous="$(gh release list --json tagName,isPrerelease,isDraft --limit 1000 \
+            | python3 rokt-workflows/size-report/previous_release.py "${VERSION}")"
+          echo "version=${previous}" >> "${GITHUB_OUTPUT}"
+          echo "Previous stable release: ${previous:-none}"
+
+      - name: Measure
+        env:
+          PREVIOUS: ${{ steps.previous.outputs.version }}
+        run: |
+          set -uo pipefail
+          RESULTS="${RUNNER_TEMP}/size-results"
+          mkdir -p "${RESULTS}"
+          measure="rokt-workflows/size-report/${PLATFORM}/measure.sh"
+          deadline=$(( $(date +%s) + WAIT_MINUTES * 60 ))
+          while IFS='=' read -r package _; do
+            [[ -n "${package}" ]] || continue
+            # A just-published version can take a while to reach Maven Central, so the current
+            # version is retried until the deadline. The previous one either exists or does not.
+            until "${measure}" "${package}" "${VERSION}" > "${RESULTS}/${package}-${VERSION}.json"; do
+              if (( $(date +%s) >= deadline )); then
+                echo "::warning::${package} ${VERSION} could not be measured"
+                : > "${RESULTS}/${package}-${VERSION}.json"
+                break
+              fi
+              sleep 300
+            done
+            if [[ -n "${PREVIOUS}" ]]; then
+              "${measure}" "${package}" "${PREVIOUS}" > "${RESULTS}/${package}-${PREVIOUS}.json" \
+                || echo "::warning::${package} ${PREVIOUS} could not be measured"
+            fi
+          done <<< "${ROWS}"
+
+      - name: Render section
+        env:
+          PREVIOUS: ${{ steps.previous.outputs.version }}
+          METHOD_URL: https://github.com/ROKT/rokt-workflows/blob/${{ inputs.workflows_ref }}/size-report/README.md
+        run: |
+          set -euo pipefail
+          RESULTS="${RUNNER_TEMP}/size-results"
+          args=(--platform "${PLATFORM}" --version "${VERSION}" --results-dir "${RESULTS}" --method-url "${METHOD_URL}")
+          [[ -z "${PREVIOUS}" ]] || args+=(--previous "${PREVIOUS}")
+          had=""
+          [[ -z "${PREVIOUS}" || -n "${ROWS_OVERRIDE}" ]] \
+            || had="$(python3 rokt-workflows/size-report/rows.py "${PRODUCT}" "${PREVIOUS}")"
+          while IFS= read -r row; do
+            [[ -n "${row}" ]] || continue
+            args+=(--row "${row}")
+            if [[ -n "${PREVIOUS}" && -z "${ROWS_OVERRIDE}" ]] && ! grep -qx -- "${row}" <<< "${had}"; then
+              args+=(--new "${row%%=*}")
+            fi
+          done <<< "${ROWS}"
+          python3 rokt-workflows/size-report/render_release_size.py "${args[@]}" > "${RUNNER_TEMP}/section.md"
+          cat "${RUNNER_TEMP}/section.md" >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Update release body
+        run: |
+          set -euo pipefail
+          RESULTS="${RUNNER_TEMP}/size-results"
+          # Nothing measured at all means a broken run, not a release with no size; leave the
+          # body alone rather than publishing a table of "not measured".
+          if ! find "${RESULTS}" -name "*-${VERSION}.json" -size +0 | grep -q .; then
+            echo "::error::Nothing was measured for ${VERSION}; the release body was not changed."
+            exit 1
+          fi
+          gh release view "${TAG}" --json body --jq .body > "${RUNNER_TEMP}/body.md"
+          python3 rokt-workflows/size-report/update_release_body.py \
+            "${RUNNER_TEMP}/body.md" "${RUNNER_TEMP}/section.md" > "${RUNNER_TEMP}/new-body.md"
+          gh release edit "${TAG}" --notes-file "${RUNNER_TEMP}/new-body.md"
