@@ -1,0 +1,45 @@
+{
+  "mparticle-android": {
+    "platform": "android",
+    "backfill_major": 6,
+    "rows": [
+      ["mparticle-core", "mParticle Core SDK"],
+      ["mparticle-rokt-kit", "Core SDK + Rokt kit"],
+      ["rokt-sdk-plus", "Rokt SDK+ (adds the payment extension)", "6.0.0"]
+    ]
+  },
+  "mparticle-apple": {
+    "platform": "ios",
+    "backfill_major": 9,
+    "rows": [
+      ["mparticle-core", "mParticle Core SDK"],
+      ["mparticle-rokt-kit", "Core SDK + Rokt kit"]
+    ]
+  },
+  "rokt-sdk-android": {
+    "platform": "android",
+    "backfill_major": 6,
+    "rows": [
+      ["rokt-sdk", "Rokt SDK"],
+      ["rokt-payment-extension", "Rokt SDK + payment extension", "6.0.1"]
+    ]
+  },
+  "rokt-sdk-ios": {
+    "platform": "ios",
+    "backfill_major": 5,
+    "rows": [
+      ["rokt-sdk", "Rokt SDK"],
+      ["rokt-payment-extension", "Rokt SDK + payment extension", "5.2.4"]
+    ]
+  },
+  "rokt-ux-helper-android": {
+    "platform": "android",
+    "backfill_major": 2,
+    "rows": [["rokt-ux-helper", "Rokt UX Helper"]]
+  },
+  "rokt-ux-helper-ios": {
+    "platform": "ios",
+    "backfill_major": 2,
+    "rows": [["rokt-ux-helper", "Rokt UX Helper"]]
+  }
+}

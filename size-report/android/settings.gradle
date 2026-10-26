@@ -1,0 +1,17 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    // Published artifacts only: no mavenLocal, so a local build can never stand in for a release.
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = 'release-size-report'

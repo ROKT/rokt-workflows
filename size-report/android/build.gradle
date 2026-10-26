@@ -1,0 +1,105 @@
+plugins {
+    id 'com.android.application' version '8.9.1'
+    id 'org.jetbrains.kotlin.android' version '2.1.20'
+    // Module-level, not per-flavor: the Compose compiler cannot be scoped to a flavor. Version
+    // must track the Kotlin version above.
+    id 'org.jetbrains.kotlin.plugin.compose' version '2.1.20'
+}
+
+// Two flavors of one app, built by one toolchain so the delta between them is the package alone:
+//
+//   baseline -> the starting app
+//   target   -> the starting app + the package at -Psize.version, entry point from packages/<id>
+//
+// Changing anything in this file, the plugin versions or the Compose BOM moves every number, so
+// treat it as a change to the method. See ../README.md.
+def sizePackage = providers.gradleProperty('size.package').getOrElse('rokt-ux-helper')
+def sizeVersion = providers.gradleProperty('size.version').getOrElse('0.0.0')
+
+def coordinates = [
+    'mparticle-core'        : ["com.mparticle:android-core:${sizeVersion}"],
+    'mparticle-rokt-kit'    : ["com.mparticle:android-rokt-kit:${sizeVersion}"],
+    'rokt-sdk-plus'         : ["com.rokt:rokt-sdk-plus:${sizeVersion}"],
+    'rokt-sdk'              : ["com.rokt:roktsdk:${sizeVersion}"],
+    'rokt-payment-extension': ["com.rokt:roktsdk:${sizeVersion}", "com.rokt:payment-extension:${sizeVersion}"],
+    'rokt-ux-helper'        : ["com.rokt:roktux:${sizeVersion}"],
+]
+if (!coordinates.containsKey(sizePackage)) {
+    throw new GradleException("Unknown size.package '${sizePackage}'. Known: ${coordinates.keySet()}")
+}
+
+// One build directory per package: the target flavor's sources change with the package, and a
+// shared one let Kotlin's incremental state from the previous package break the next compile.
+layout.buildDirectory = layout.projectDirectory.dir("build/${sizePackage}")
+
+configurations.all {
+    resolutionStrategy {
+        // android-rokt-kit floats android-kit-base with '+', which today resolves to the newest
+        // core rather than the one released alongside this version. Pin the mParticle chain to
+        // the measured version, as it resolved on release day.
+        if (sizePackage.startsWith('mparticle-') || sizePackage == 'rokt-sdk-plus') {
+            force "com.mparticle:android-core:${sizeVersion}"
+            force "com.mparticle:android-kit-base:${sizeVersion}"
+        }
+    }
+}
+
+android {
+    namespace 'com.rokt.sizereport'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'com.rokt.sizereport'
+        minSdk 23
+        targetSdk 35
+        versionCode 1
+        versionName '1.0'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    flavorDimensions += 'size'
+    productFlavors {
+        baseline { dimension 'size' }
+        target { dimension 'size' }
+    }
+
+    sourceSets {
+        target.java.srcDirs += "packages/${sizePackage}/java"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    lint { checkReleaseBuilds false }
+    buildFeatures {
+        buildConfig false
+        compose true
+    }
+}
+
+dependencies {
+    // The starting app, shared by both flavors so it drops out of the delta. This set is a
+    // convention, not a measured average of partner apps.
+    implementation platform('androidx.compose:compose-bom:2026.05.01')
+    implementation 'androidx.core:core-ktx:1.15.0'
+    implementation 'androidx.appcompat:appcompat:1.7.1'
+    implementation 'androidx.activity:activity-compose:1.10.1'
+    implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.8.7'
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.material3:material3'
+
+    coordinates[sizePackage].each { targetImplementation it }
+}
