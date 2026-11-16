@@ -7,13 +7,19 @@ on:
       - main
     paths:
       - .github/workflows/**
+      - .github/dependabot.yml
       - actions/**
   push:
     branches:
       - main
     paths:
       - .github/workflows/**
+      - .github/dependabot.yml
       - actions/**
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions: {}
 
@@ -31,9 +37,11 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 1
+      # A finding fails this job. Pinned so Dependabot bumps of zizmor-action keep this zizmor
+      # version; bump it together with the fixes its new audits ask for.
       - name: Run zizmor
-        uses: zizmorcore/zizmor-action@5f14fd08f7cf1cb1609c1e344975f152c7ee938d # v0.5.6
-        continue-on-error: true # Permanent — reports findings without blocking PRs
+        uses: zizmorcore/zizmor-action@45d7276c9ca790aabd705e31ca99c6185c3e76dd # v0.8.1
         with:
           advanced-security: false
           annotations: true
+          version: 1.32.0
