@@ -96,9 +96,11 @@ and edit it out later.
    with `fetch-depth: 0`, as `README.md` says. Relatedly, `find_last_tag` requires the whole tag to
    match `^v?\d+\.\d+\.\d+$` after applying the prefix, so any `tag-prefix` other than `v` is
    discarded the same silent way.
-4. **Zizmor never blocks.** `.github/workflows/zizmor.yml` sets `continue-on-error: true`
-   deliberately, and the workflow is `paths:`-scoped to `.github/workflows/**` and `actions/**`, so
-   a change under `rokt-trunk-plugin/` is never scanned at all.
+4. **Zizmor fails on workflow findings within its `paths:` filter.**
+   `.github/workflows/zizmor.yml` pins `zizmor` `1.32.0` without `continue-on-error`, so any
+   finding fails the check. The workflow is `paths:`-scoped to `.github/workflows/**`,
+   `.github/dependabot.yml`, and `actions/**`, so a change under `rokt-trunk-plugin/` is never
+   scanned at all.
 5. **`notify-gchat` fails on every Dependabot PR, and only those.**
    `oss_pr_opened_notification.yml` triggers on `pull_request` as well as `workflow_call` and reads
    `secrets.gchat_webhook`, which resolves from the repository secret on a normal PR. GitHub gives
@@ -107,8 +109,8 @@ and edit it out later.
    check reads as permanently broken. Not your change.
 6. **Trunk Lint can turn red on `main` with nobody committing.** Semgrep's rules come from its
    registry at run time, not from the version pinned in `.trunk/trunk.yaml`, so a newly published
-   rule reddens a file that was green yesterday. `.github/dependabot.yml` is red this way today (a
-   missing `cooldown` block) — check whether it still is before assuming your diff caused it.
+   rule reddens a file that was green yesterday (as happened to `.github/dependabot.yml` before its
+   `cooldown` block was added) — check `main` before assuming your diff caused it.
 
 ## Repository etiquette
 
